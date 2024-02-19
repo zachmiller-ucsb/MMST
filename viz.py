@@ -3,42 +3,27 @@ import matplotlib.animation as animation
 import numpy as np
 from MBMST import parse
 
-DT = .02
-TFINAL = 4
-FRAMES = int(4 / DT)
-INTERVAL = DT * 1000
-
 class Visualization:
     def __init__(self, V, frames, interval):
-        # v maps coord tuples to velocity tuples
-        self.x = []
-        self.y = []
-        self.vx = []
-        self.vy = []
-        for coord, vel in V.items():
-            _x, _y = coord
-            _vx, _vy = vel
-            self.x.append(_x)
-            self.y.append(_y)
-            self.vx.append(_vx)
-            self.vy.append(_vy)
+        self.V = V
         self.frames = frames
         self.interval = interval
 
     def run(self):
         fig, ax = plt.subplots()
-        ax.set(xlim=[-100, 100], ylim=[-100, 100])
-        line = ax.scatter(self.x, self.y)
+        line = ax.scatter(*zip(*self.V.keys()))
+        ax.set(xlim=[-3, 3], ylim=[-3, 3])
+        mindim = min(abs(ax.get_xlim()[1] - ax.get_xlim()[0]), abs(ax.get_ylim()[1] - ax.get_ylim()[0]))
+        div = mindim / self.frames
         def update(frame):
-            self.x = [self.x[i] + (self.vx[i] * float(frame) / self.frames) for i in range(len(self.x))]
-            self.y = [self.y[i] + (self.vy[i] * float(frame) / self.frames) for i in range(len(self.y))]
-            data = np.stack([self.x, self.y]).T
+            new_coords = list(map(lambda cv: np.array(cv[0]) + np.array(cv[1]) * frame * div, self.V.items()))
+            data = np.stack(new_coords).T
             line.set_offsets(data)
-            return (line)
-        ani = animation.FuncAnimation(fig=fig, func=update, frames=FRAMES, interval=INTERVAL, repeat=True)
+            return line
+        ani = animation.FuncAnimation(fig=fig, func=update, frames=self.frames, interval=self.interval, repeat=True)
         plt.show()
 
 if __name__ == "__main__":
     V = parse()
-    viz = Visualization(V, 10, 3)
+    viz = Visualization(V, 500, 1)
     viz.run()
