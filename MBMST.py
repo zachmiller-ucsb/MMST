@@ -44,8 +44,7 @@ def max_dist(p1, v1, p2, v2):
     # Can replace npl.norm with whatever else we want to use
     return max([npl.norm(a - b) for a in pos_p1 for b in pos_p2])
 
-def main():
-    V = parse()
+def find_MBMST(V) -> set:
     G = { p : {} for p in V.keys()}
     heap = []
     for p1 in V.keys():
@@ -64,6 +63,11 @@ def main():
             continue 
         if union_find.Union(p1, p2):
             MBMST.add((p1, p2))
+    return MBMST
+
+def main():
+    V = parse()
+    MBMST = find_MBMST(V)
     print(MBMST)
 
 
