@@ -4,8 +4,8 @@ import numpy.linalg as npl
 import heapq
 
 class UnionFind:
-    def __init__(self, V):
-        self.parent = {p : p for p in V.keys()}
+    def __init__(self, G):
+        self.parent = {p : p for p in G.keys()}
 
     def Union(self, a, b):
         parenta, parentb = self.Find(a), self.Find(b)
@@ -46,18 +46,22 @@ def max_dist(p1, v1, p2, v2):
 
 def find_MBMST(V) -> set:
     G = { p : {} for p in V.keys()}
-    heap = []
     for p1 in V.keys():
         for p2 in V.keys():
             if p1 != p2:
                 w = max_dist(p1, V[p1], p2, V[p2])
                 G[p1][p2] = w
-                heap.append((w, p1, p2))
-
+    return mst(G)
+    
+def mst(G):
+    heap = []
+    for p1 in G.keys():
+        for p2 in G[p1]:
+            heap.append((G[p1][p2], p1, p2))
     heapq.heapify(heap)
     MBMST = set()
-    union_find = UnionFind(V)
-    while len(MBMST) < len(V.keys()) - 1:
+    union_find = UnionFind(G)
+    while len(MBMST) < len(G.keys()) - 1:
         _, p1, p2 = heapq.heappop(heap)
         if (p2, p1) in MBMST:
             continue 
@@ -68,7 +72,8 @@ def find_MBMST(V) -> set:
 def main():
     V = parse()
     MBMST = find_MBMST(V)
-    print(MBMST)
+    # print(MBMST)
+    print("MBMST sum = ", sum([max_dist(e[0], V[e[0]], e[1], V[e[1]]) for e in MBMST]))
 
 
 if __name__ == '__main__':
