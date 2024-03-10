@@ -56,61 +56,6 @@ def average_distance(p1, v1, p2, v2):
     u = lambda t: (1/np.sqrt(q)) * (t + p)
     I = lambda t: q*np.sqrt(a) * (1/2) * u(t) * np.sqrt(u(t)*u(t) + 1) + np.arcsinh(u(t))
     return I(1) - I(0)
-    
-
-    # Irrelevant
-    # Now, we want to u-sub to reduce the integrand to a square
-    # In general, a real affine transformation is not sufficient.
-    # Need to use complex.
-
-    # Scratch work
-    # t = u + X
-    # dt = du
-
-    # a(u + X)^2 + b(u + X) + c = (su+r)^2 ... (is a square
-    # The above holds if and only if:
-    # r^2 = c + bX + aX^2
-    # 2sr = b + 2aX
-    # s^2 = a
-
-    # 4(c+bX + aX^2)(a) = (b + 2aX)^2
-
-    # 4ac + 4abX + 4a^2X^2 = b^2 + 4abX + 4a^2X
-    # 0 = (4a^2)X^2 + (4ab-2a)X + (4ac - b)
-    # Use quadratic formula (or SageMath):
-
-    # sage: var('a b c')
-    # (a, b, c)
-    # sage: f(x) = (4*a^2)*x^2 + (4*a*b-2*a)*x + (4*a*c-b)
-    # sage: solve(f(x),x)
-    # [x == -1/4*(2*b + sqrt(4*b^2 - 16*a*c + 1) - 1)/a, x == -1/4*(2*b - sqrt(4*b^2 - 16*a*c + 1) - 1)/a]
-    x1 = (-1/4)*(2*b + np.sqrt(4*b*b - 16*a*c + 1) - 1)/a
-    x2 = (-1/4)*(2*b - np.sqrt(4*b*b - 16*a*c + 1) - 1)/a
-
-    # Irrelevant:
-    # Either one real zero or no real zeros ==> Original Discriminant = b^2 - 4ac <= 0
-    # b^2 <= 4ac
-
-    # Does new equation have real zeros?
-    # (4ab-2a)^2 - 4(4a^2)(4ac-b)
-    # ~= (2ab-a)^2 - (4a^2)(4ac-b) ... (dropped constant factor of 4 on all terms)
-    # = 4a^2b^2 - 4a^2b + a^2 - 16a^3c + 4a^2b
-    # = a^2 + 4a^2b^2 - 16a^3c
-    # a^2 >= b + c
-
-    # Irrelevant:
-    # t = Au + B
-    # dt = Adu
-    
-    # a(Au+B)^2 + b(Au+B) + c
-    
-    # The above holds if and only if:
-    # r^2 = c + bB + aB^2
-    # 2sr = bA + 2aAB
-    # s^2 = aA^2
-
-    # (bA + 2aAB)^2 = 4(aA^2 + c + bB + aB^2)
-    # b^2A^2 + 2abA^2B^2
 
 # Finds a minimal moving matching.
 
