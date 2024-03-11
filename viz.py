@@ -42,9 +42,15 @@ class Visualization:
             nodes.set_offsets(data)
             return (nodes, edges)
         ani = animation.FuncAnimation(fig=fig, func=update, frames=self.frames, interval=self.interval, repeat=True)
+        def save_ani():
+            writer = animation.PillowWriter(fps=10,
+                                            metadata=dict(artist='Me'),
+                                            bitrate=2)
+            ani.save('scatter.gif', writer=writer)
+        # save_ani()
         plt.show()
 
 if __name__ == "__main__":
     V = parse()
-    viz = Visualization(V, 500, .01)
+    viz = Visualization(V, 60, .001)
     viz.run()
