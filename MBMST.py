@@ -20,17 +20,20 @@ class UnionFind:
         self.parent[a] = self.Find(self.parent[a])
         return self.parent[a]
 
-def parse():
+def parse() -> set[tuple[int, int, int, int]]:
     n = int(sys.stdin.readline())
-    V = {}
+    V = set()
     for _ in range(n):
-        x, y, vx, vy = [int(i) for i in sys.stdin.readline().split()]
-        V[(x,y)] = (vx,vy)
+        point_vel = [int(i) for i in sys.stdin.readline().split()]
+        assert len(point_vel) == 4
+        V.add(tuple(point_vel))
     return V
 
 # According to corollary 2 in bunch_of_people et. al., we can take 
 # max_dist = max(dist_at_0, dist_at_1) (we normalize time interval to [0,1])
-def max_dist(p1, v1, p2, v2):
+def max_dist(pv1, pv2):
+    p1, p2 = pv1[:2], pv2[:2]
+    v1, v2 = pv1[2:], pv2[2:]
     # pos at 0 and at 1 for p1
     pos_p1 = [
         np.array([p1[0], p1[1]]),
@@ -44,15 +47,15 @@ def max_dist(p1, v1, p2, v2):
     # Can replace npl.norm with whatever else we want to use
     return max([npl.norm(a - b) for a in pos_p1 for b in pos_p2])
 
-def find_MBMST(V) -> set:
-    G = { p : {} for p in V.keys()}
-    for p1 in V.keys():
-        for p2 in V.keys():
+def find_MBMST(V):
+    G = { p : {} for p in V }
+    for p1 in V:
+        for p2 in V:
             if p1 != p2:
-                w = max_dist(p1, V[p1], p2, V[p2])
+                w = max_dist(p1, p2)
                 G[p1][p2] = w
     return mst(G)
-    
+
 def mst(G):
     heap = []
     for p1 in G.keys():
@@ -73,7 +76,7 @@ def main():
     V = parse()
     MBMST = find_MBMST(V)
     # print(MBMST)
-    print("MBMST sum = ", sum([max_dist(e[0], V[e[0]], e[1], V[e[1]]) for e in MBMST]))
+    print("MBMST sum = ", sum([max_dist(*e) for e in MBMST]))
 
 
 if __name__ == '__main__':
