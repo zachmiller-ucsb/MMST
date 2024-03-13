@@ -26,9 +26,10 @@ def parse() -> tuple[int, int, list[int]]:
 def run_viz(V, alg, frames, interval):
     MMST = alg(V)
     fig, ax = plt.subplots(2, 1)
+    plt.subplots_adjust(hspace=.5)
     nodes = ax[0].scatter(*zip(*V.keys()))
-    cost_x, cost_y = [],[]
-    cost = ax[1].plot(cost_x, cost_y)[0]
+    cost_map = {}
+    cost = ax[1].plot(list(cost_map.keys()), list(cost_map.values()))[0]
     def curved_edge(x_coords, y_coords):
         return ax[0].annotate("",
             xy=(x_coords[0], y_coords[0]), xycoords='data',
@@ -66,10 +67,13 @@ def run_viz(V, alg, frames, interval):
             curr_cost += npl.norm(new_coords[e[1]] - new_coords[e[0]])
             new_x = list(map(lambda nc: nc[0], new_coords.values()))
             new_y = list(map(lambda nc: nc[1], new_coords.values()))
-        cost_x.append(frame)
-        cost_y.append(curr_cost)
-        cost.set_data(cost_x, cost_y)
-        cost.axes.axis([0, frame, min(cost_y), max(cost_y)])
+        cost_map[frame] = curr_cost
+        cost_vals = list(cost_map.values())
+        max_cost_val = max(cost_vals)
+        min_cost_val = min(cost_vals)
+        cost.set_data(list(cost_map.keys()), cost_vals)
+        cost.axes.axis([0, frame, 1.2 * (min_cost_val - max_cost_val) + max_cost_val, max_cost_val])
+        ax[1].set_title("MBMST cost = {:.3f}".format(curr_cost))
         data = np.stack([new_x, new_y]).T
         nodes.set_offsets(data)
         return (nodes, edges, cost)
