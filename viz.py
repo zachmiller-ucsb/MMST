@@ -19,8 +19,9 @@ class Visualization:
         nodes = ax[0].scatter(*zip(*map(lambda pv: pv[:2], V)))
         ax[0].set_title("Points in the plane")
         edges = { e : ax[0].plot([e[0][0], e[1][0]], [e[0][1], e[1][1]], color="C0")[0] for e in self.MBMST }
-        cost_map = {}
-        cost = ax[1].plot(list(cost_map.keys()), list(cost_map.values()))[0]
+        times = [f for f in range(self.frames + 1)]
+        costs = []
+        cost_plt = ax[1].plot([], [])[0]
         def calc_lims(c, v):
             cx, cy = c
             vx, vy = v
@@ -43,17 +44,19 @@ class Visualization:
                 e_plt.set_xdata([new_coords[e[0]][0], new_coords[e[1]][0]])
                 e_plt.set_ydata([new_coords[e[0]][1], new_coords[e[1]][1]])
                 curr_cost += npl.norm(new_coords[e[1]] - new_coords[e[0]])
-            cost_map[frame] = curr_cost
-            cost.set_data(*zip(*cost_map.items()))
-            min_cost = min(cost_map.values())
-            max_cost = max(cost_map.values())
-            cost.axes.axis([0, frame, 1.2 * (min_cost - max_cost) + max_cost, max_cost])
+            if frame == 0:
+                costs.clear()
+            costs.append(curr_cost)
+            cost_plt.set_data(times[:frame + 1], costs)
+            min_cost = min(costs)
+            max_cost = max(costs)
+            cost_plt.axes.axis([0, frame, 1.2 * (min_cost - max_cost) + max_cost, max_cost])
             ax[1].set_title("MBMST cost = {:.3f}".format(curr_cost))
             new_x = list(map(lambda nc: nc[0], new_coords.values()))
             new_y = list(map(lambda nc: nc[1], new_coords.values()))
             data = np.stack([new_x, new_y]).T
             nodes.set_offsets(data)
-            return (nodes, edges, cost)
+            return (nodes, edges, cost_plt)
         ani = animation.FuncAnimation(fig=fig, func=update, frames=self.frames, interval=self.interval, repeat=True)
         def save_ani():
             writer = animation.PillowWriter(fps=10,
