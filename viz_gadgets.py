@@ -27,9 +27,8 @@ def run_viz(V, alg, frames, interval):
     MMST = alg(V)
     fig, ax = plt.subplots(2, 1)
     plt.subplots_adjust(hspace=.5)
-    nodes = ax[0].scatter(*zip(*V.keys()))
-    cost_map = {}
-    cost = ax[1].plot(list(cost_map.keys()), list(cost_map.values()))[0]
+    nodes = ax[0].scatter(*zip(*map(lambda pv: pv[:2], V)))
+    ax[0].set_title("Points in the plane")
     def curved_edge(x_coords, y_coords):
         return ax[0].annotate("",
             xy=(x_coords[0], y_coords[0]), xycoords='data',
@@ -41,6 +40,9 @@ def run_viz(V, alg, frames, interval):
                             ),
         )
     edges = { e : curved_edge([e[0][0], e[1][0]], [e[0][1], e[1][1]]) for e in MMST }
+    times = [f for f in range(frames + 1)]
+    costs = []
+    cost_plt = ax[1].plot([], [])[0]
     # Compute x and y axis lims
     def calc_lims(c, v):
         cx, cy = c
@@ -50,33 +52,34 @@ def run_viz(V, alg, frames, interval):
         min_x, max_x = (cx0, cx1) if cx0 < cx1 else (cx1, cx0)
         min_y, max_y = (cy0, cy1) if cy0 < cy1 else (cy1, cy0)
         return ([min_x, max_x], [min_y, max_y])
-    x_lim, y_lim = calc_lims(*list(V.items())[0])
-    for c, v in V.items():
-        x_lim_, y_lim_ = calc_lims(c, v)
+    x_lim, y_lim = calc_lims(list(V)[0][:2], list(V)[0][2:])
+    for cv in V:
+        x_lim_, y_lim_ = calc_lims(cv[:2], cv[2:])
         for lim, lim_ in [(x_lim, x_lim_), (y_lim, y_lim_)]:
             lim[0] = min(lim[0], lim_[0])
             lim[1] = max(lim[1], lim_[1])
     ax[0].set(xlim=x_lim, ylim=y_lim)
     # Animation frame update
     def update(frame):
-        new_coords = { cv[0] : np.array(cv[0]) + np.array(cv[1]) * frame for cv in V.items() }
-        curr_cost = 0
+        new_coords = { cv : np.array(cv[:2]) + np.array(cv[2:]) * frame for cv in V }
+        curr_cost = .0
         for e, e_ann in edges.items():
             e_ann.remove()
             edges[e] = curved_edge([new_coords[e[0]][0], new_coords[e[1]][0]], [new_coords[e[0]][1], new_coords[e[1]][1]])
             curr_cost += npl.norm(new_coords[e[1]] - new_coords[e[0]])
-            new_x = list(map(lambda nc: nc[0], new_coords.values()))
-            new_y = list(map(lambda nc: nc[1], new_coords.values()))
-        cost_map[frame] = curr_cost
-        cost_vals = list(cost_map.values())
-        max_cost_val = max(cost_vals)
-        min_cost_val = min(cost_vals)
-        cost.set_data(list(cost_map.keys()), cost_vals)
-        cost.axes.axis([0, frame, 1.2 * (min_cost_val - max_cost_val) + max_cost_val, max_cost_val])
-        ax[1].set_title("MBMST cost = {:.3f}".format(curr_cost))
+        if frame == 0:
+            costs.clear()
+        costs.append(curr_cost)
+        cost_plt.set_data(times[:frame + 1], costs)
+        min_cost = min(costs)
+        max_cost = max(costs)
+        cost_plt.axes.axis([0, frame, 1.2 * (min_cost - max_cost) + max_cost, max_cost])
+        ax[1].set_title("MBMST cost = {:.3f} min cost = {:.3f}".format(curr_cost, min_cost))
+        new_x = list(map(lambda nc: nc[0], new_coords.values()))
+        new_y = list(map(lambda nc: nc[1], new_coords.values()))
         data = np.stack([new_x, new_y]).T
         nodes.set_offsets(data)
-        return (nodes, edges, cost)
+        return (nodes, edges, cost_plt)
     ani = animation.FuncAnimation(fig=fig, func=update, frames=frames, interval=interval, repeat=True)
     def save_ani():
         writer = animation.PillowWriter(fps=10,
@@ -87,22 +90,21 @@ def run_viz(V, alg, frames, interval):
     plt.show()
 
 if __name__ == '__main__':
-    V = {}
+    V = set()
     num_points, l, a = parse()
     frames = 300 # Not a cmd line param for now
     for i in range(num_points):
-        V[(10 * i, 0)] = (0, 0) # Ai
-        V[(10 * i + 4 - float(a[i]) / (4 * l), 0)] = (0, 0) # Bi
-        V[(10 * i + 4 + float(a[i]) / (4 * l), 0)] = (0, 0) # Ci
-        V[(10 * i + 6, 0)] = (0, 0) # Di
-        V[(10 * i + 5, 0)] = (float(-4) / frames, 0) # Ei
-    V[(10 * num_points, 0)] = (0, 0) # P
-    V[(10 * num_points + float(11) / 10 * num_points, 0)] = (0, 0) # Q
-    V[(10 * num_points + float(32) / 10 * num_points, 0)] = (0, 0) # R
-    # Note that this is cheating:
-    # The extra factor .999 very slightly perturbs coordinates for S
-    # so that we can hash to a separate k/v pair
-    V[(10 * num_points + float(32) / 10 * num_points * .999, 0)] = \
-        ((10 * num_points - (10 * num_points + float(32) / 10 * num_points * .999)) / frames, 0) # S
-    assert len(V.keys()) == 5 * num_points + 4, f"{5 * num_points + 4} =/= {len(V.keys())}"
+        V.add((10 * i, 0, 0, 0)) # Ai
+        V.add((10 * i + 4 - float(a[i]) / (4 * l), 0, 0, 0)) # Bi
+        V.add((10 * i + 4 + float(a[i]) / (4 * l), 0, 0, 0)) # Ci
+        V.add((10 * i + 6, 0, 0, 0)) # Di
+        V.add((10 * i + 5, 0, float(-4) / frames, 0)) # Ei
+    V.add((10 * num_points, 0, 0, 0)) # P
+    V.add((10 * num_points + float(11) / 10 * num_points, 0, 0, 0)) # Q
+    V.add((10 * num_points + float(32) / 10 * num_points, 0, 0, 0)) # R
+    V.add((
+        10 * num_points + float(32) / 10 * num_points * .999, 0,
+        (10 * num_points - (10 * num_points + float(32) / 10 * num_points)) / frames, 0
+    )) # S
+    assert len(V) == 5 * num_points + 4, f"{5 * num_points + 4} =/= {len(V)}"
     run_viz(V, find_MBMST, frames, .001)
