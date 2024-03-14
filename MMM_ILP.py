@@ -23,7 +23,7 @@ def weightsV(p1, v1, p2, v2):
 # any identical dimension, but V must have an even number of points so
 # that a matching exists.
 
-def MMM(V) -> (OptimizeResult, set):
+def MMM(V, relax=False) -> (OptimizeResult, set):
 
     eps = np.finfo(float).eps
     
@@ -56,20 +56,27 @@ def MMM(V) -> (OptimizeResult, set):
     constraints += [LinearConstraint(np.array([0] * len(edges) + [-1,1]), 0)]
     obj_fn = np.array([0]*(len(edges)+1) + [1])
     res = milp(obj_fn,
-               integrality=np.array([1]*len(edges) + [0,0]),
+               integrality=np.array(([0] if relax else [1])*len(edges) + [0,0]),
                constraints=constraints)
     if res.x is None:
         return [res,None]
     mm_edges = []
-    for i,flag in enumerate(res.x[:-2]):
-        if abs(flag-1) < eps:
+    enum_edges = [(-w,i) for (i,w) in enumerate(res.x[:-2])]
+    enum_edges.sort()
+    vertices = []
+    for (w,i) in enum_edges:
+        u,v = edges[i]
+        if u not in vertices and v not in vertices:
             mm_edges += [edges[i]]
+            vertices += [u, v]
     return [res,mm_edges]
 
-print(MMM({
-   # point : velocity
-   (0,0):(0,0),
-   (1,1):(0,0),
-   (-1,-1):(0,0),
-   (-2,-2):(0,0),
-}))
+S = {
+    # point : velocity
+    (0,0):(0,0),
+    (1,1):(0,0),
+    (-1,-1):(0,0),
+    (-2,-2):(0,0),
+    (1,-1):(-5,0),
+    (2,-2):(-3,3),
+}
