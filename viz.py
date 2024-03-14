@@ -51,7 +51,7 @@ class Visualization:
             min_cost = min(costs)
             max_cost = max(costs)
             cost_plt.axes.axis([0, frame, 1.2 * (min_cost - max_cost) + max_cost, max_cost])
-            ax[1].set_title("MBMST cost = {:.3f}".format(curr_cost))
+            ax[1].set_title("MBMST cost = {:.3f} min cost = {:.3f}".format(curr_cost, min_cost))
             new_x = list(map(lambda nc: nc[0], new_coords.values()))
             new_y = list(map(lambda nc: nc[1], new_coords.values()))
             data = np.stack([new_x, new_y]).T
